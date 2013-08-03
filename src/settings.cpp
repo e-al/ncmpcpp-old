@@ -423,7 +423,7 @@ void NcmpcppConfig::SetDefaults()
 	now_playing_lyrics = false;
 	fetch_lyrics_in_background = false;
 	local_browser_show_hidden_files = false;
-	search_in_db = true;
+    //search_in_db = true;
 	display_screens_numbers_on_start = true;
 	jump_to_now_playing_song_at_start = true;
 	clock_display_seconds = false;
@@ -461,6 +461,7 @@ void NcmpcppConfig::SetDefaults()
 	regex_type = 0;
 	lines_scrolled = 2;
 	search_engine_default_search_mode = 0;
+    search_engine_default_source = 0;
 	visualizer_sync_interval = 30;
 	locked_screen_width_part = 0.5;
 	selected_item_suffix_length = 0;
@@ -1098,9 +1099,21 @@ void NcmpcppConfig::Read()
 			{
 				ncmpc_like_songs_adding = v == "yes";
 			}
-			else if (name == "default_place_to_search_in")
+            // TODO: Сделать так, как в остальных парметрах (search_engine_default_search_mode)
+            else if (name == "default_place_to_search_in")
 			{
-				search_in_db = v == "database";
+                if (v == "database")
+                {
+                    search_engine_default_source = 0;
+                }
+                else if (v == "currentplaylist")
+                {
+                    search_engine_default_source = 1;
+                }
+                else if (v == "vk.com")
+                {
+                    search_engine_default_source = 2;
+                }
 			}
 			else if (name == "display_screens_numbers_on_start")
 			{
@@ -1218,7 +1231,8 @@ void NcmpcppConfig::Read()
 				if (!v.empty())
 				{
 					unsigned mode = StrToInt(v);
-					if (--mode < 3)
+                    //TODO: test this thing (&& mode > 0)
+                    if (--mode < 3 && mode > 0)
 						search_engine_default_search_mode = mode;
 				}
 			}

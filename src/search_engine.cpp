@@ -55,6 +55,14 @@ const char *SearchEngine::SearchModes[] =
 	0
 };
 
+const char *SearchEngine::SearchSources[] =
+{
+    "Database",
+    "Current playlist",
+    "vk.com",
+    0
+};
+
 size_t SearchEngine::StaticOptions = 19;
 size_t SearchEngine::ResetButton = 15;
 size_t SearchEngine::SearchButton = 14;
@@ -72,7 +80,8 @@ void SearchEngine::Init()
 	w->SetSelectPrefix(&Config.selected_item_prefix);
 	w->SetSelectSuffix(&Config.selected_item_suffix);
 	w->SetGetStringFunction(SearchEngineOptionToString);
-	SearchMode = &SearchModes[Config.search_engine_default_search_mode];
+    SearchMode = &SearchModes[Config.search_engine_default_search_mode];
+    SearchSource = &SearchSources[Config.search_engine_default_source];
 	isInitialized = 1;
 }
 
@@ -82,7 +91,7 @@ void SearchEngine::Resize()
 	GetWindowResizeParams(x_offset, width);
 	w->Resize(width, MainHeight);
 	w->MoveTo(x_offset, MainStartY);
-	w->SetTitle(Config.columns_in_search_engine && Config.titles_visibility ? Display::Columns(w->GetWidth()) : "");
+    w->SetTitle(Config.columns_in_search_engine && Config.titles_visibility ? Display::Columns(w->GetWidth()) : "");
 	hasToBeResized = 0;
 }
 
@@ -144,8 +153,11 @@ void SearchEngine::EnterPressed()
 	}
 	else if (option == ConstraintsNumber+1)
 	{
-		Config.search_in_db = !Config.search_in_db;
-		*w->Current().first << fmtBold << "Search in:" << fmtBoldEnd << ' ' << (Config.search_in_db ? "Database" : "Current playlist");
+        if (!*++SearchSource)
+        {
+            SearchSource = &SearchSources[0];
+        }
+        *w->Current().first << fmtBold << "Search in:" << fmtBoldEnd << ' ' << *SearchSource;
 	}
 	else if (option == ConstraintsNumber+2)
 	{
@@ -407,7 +419,7 @@ void SearchEngine::Prepare()
 		ShowTag(*(*w)[i].first, itsConstraints[i]);
 	}
 	
-	*w->at(ConstraintsNumber+1).first << fmtBold << "Search in:" << fmtBoldEnd << ' ' << (Config.search_in_db ? "Database" : "Current playlist");
+    *w->at(ConstraintsNumber+1).first << fmtBold << "Search in:" << fmtBoldEnd << ' ' << *SearchSource;
 	*w->at(ConstraintsNumber+2).first << fmtBold << "Search mode:" << fmtBoldEnd << ' ' << *SearchMode;
 	
 	*w->at(SearchButton).first << "Search";
@@ -437,7 +449,7 @@ void SearchEngine::Search()
 	if (constraints_empty)
 		return;
 	
-	if (Config.search_in_db && (SearchMode == &SearchModes[0] || SearchMode == &SearchModes[2])) // use built-in mpd searching
+    if (SearchSource == &SearchSources[0] && (SearchMode == &SearchModes[0] || SearchMode == &SearchModes[2])) // use built-in mpd searching
 	{
 		Mpd.StartSearch(SearchMode == &SearchModes[2]);
 		if (!itsConstraints[0].empty())
@@ -468,9 +480,9 @@ void SearchEngine::Search()
 	}
 	
 	MPD::SongList list;
-	if (Config.search_in_db)
+    if (SearchSource == &SearchSources[0])
 		Mpd.GetDirectoryRecursive("/", list);
-	else
+    else // if(SearchSource == &SearchSources[1])
 	{
 		list.reserve(myPlaylist->Items->Size());
 		for (size_t i = 0; i < myPlaylist->Items->Size(); ++i)
@@ -591,19 +603,20 @@ void SearchEngine::Search()
 			if (found && !itsConstraints[8].empty())
 				found = !cmp((*it)->GetDate(), itsConstraints[8]);
 			if (found && !itsConstraints[9].empty())
-				found = !cmp((*it)->GetComment(), itsConstraints[9]);
+                found = !cmp((*it)->GetComment(), itsConstraints[9]);
+
 		}
 		
 		if (found && any_found)
 		{
-			MPD::Song *ss = Config.search_in_db ? *it : new MPD::Song(**it);
+            MPD::Song *ss = (SearchSource == &SearchSources[0]) ? *it : new MPD::Song(**it);
 			w->AddOption(std::make_pair(static_cast<Buffer *>(0), ss));
 			list[it-list.begin()] = 0;
 		}
 		found = 1;
 		any_found = 1;
 	}
-	if (Config.search_in_db) // free song list only if it's database
+    if (SearchSource == &SearchSources[0]) // free song list only if it's database
 		MPD::FreeSongList(list);
 }
 

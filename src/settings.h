@@ -232,7 +232,7 @@ struct NcmpcppConfig
 	bool now_playing_lyrics;
 	bool fetch_lyrics_in_background;
 	bool local_browser_show_hidden_files;
-	bool search_in_db;
+    //bool search_in_db; Moved to unsigned search_engine_default_source;
 	bool display_screens_numbers_on_start;
 	bool jump_to_now_playing_song_at_start;
 	bool clock_display_seconds;
@@ -271,6 +271,7 @@ struct NcmpcppConfig
 	
 	unsigned lines_scrolled;
 	unsigned search_engine_default_search_mode;
+    unsigned search_engine_default_source;
 	unsigned visualizer_sync_interval;
 	
 	double locked_screen_width_part;

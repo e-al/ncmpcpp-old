@@ -14,3 +14,9 @@ missing
 src/.deps/
 src/ncmpcpp
 stamp-h1
+*.config
+*.creator*
+*.files
+*.includes
+*.autosave
+compile

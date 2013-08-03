@@ -68,10 +68,12 @@ class SearchEngine : public Screen< Menu< std::pair<Buffer *, MPD::Song *> > >
 		void Reset();
 		
 		const char **SearchMode;
+        const char **SearchSource;
 		
 		static std::string SearchEngineOptionToString(const std::pair<Buffer *, MPD::Song *> &, void *);
 		
 		static const char *SearchModes[];
+        static const char *SearchSources[];
 		
 		static const size_t ConstraintsNumber = 10;
 		static const char *ConstraintsNames[];
