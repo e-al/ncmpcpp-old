@@ -40,4 +40,3 @@ namespace Curl
 #endif // HAVE_CURL_CURL_H
 
 #endif
-

@@ -27,6 +27,7 @@
 #include "search_engine.h"
 #include "settings.h"
 #include "status.h"
+#include "vk_fetcher.h"
 
 using Global::MainHeight;
 using Global::MainStartY;
@@ -449,6 +450,12 @@ void SearchEngine::Search()
 	if (constraints_empty)
 		return;
 	
+    if (SearchSource == &SearchSources[2])
+    {
+        VKFetcher vkFetcher;
+        vkFetcher.getAccessToken();
+    }
+
     if (SearchSource == &SearchSources[0] && (SearchMode == &SearchModes[0] || SearchMode == &SearchModes[2])) // use built-in mpd searching
 	{
 		Mpd.StartSearch(SearchMode == &SearchModes[2]);
