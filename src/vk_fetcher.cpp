@@ -1,5 +1,7 @@
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/foreach.hpp>
 #include <sstream>
+#include <iostream>
 
 #include "vk_fetcher.h"
 #include "curl_handle.h"
@@ -23,6 +25,15 @@ VKFetcher::VKFetcher()
 {
 }
 
+void print(boost::property_tree::ptree const& pt)
+{
+    using boost::property_tree::ptree;
+    ptree::const_iterator end = pt.end();
+    for (ptree::const_iterator it = pt.begin(); it != end; ++it) {
+        std::cout << it->first << ": " << it->second.get_value<std::string>() << std::endl;
+        print(it->second);
+    }
+}
 
 MPD::SongList *VKFetcher::GetList()
 {
@@ -43,7 +54,7 @@ MPD::SongList *VKFetcher::GetList()
     {
         searchUrl += "performer_only=1&";
     }
-    searchUrl += "sort=2&count=100&access_token=";
+    searchUrl += "sort=2&count=5&access_token=";
     searchUrl += accessToken;
 
     std::string data;
@@ -56,11 +67,26 @@ MPD::SongList *VKFetcher::GetList()
     std::stringstream ss;
     ss << data;
 
+
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ss, pt);
-//    for (auto song : pt.get_child(""))
-//    {
 
+    //print(pt);
+    try
+    {
+        for (auto song: pt.get_child("response"))
+        {
+            std::cout << song.second.get<std::string>("title") << std::endl;
+        }
+    }
+    catch(boost::exception& e)
+    {
+        std::cout << dynamic_cast<std::exception &>(e).what() <<std::endl;
+    }
+
+//    for (auto item : pt.get_child("response.items"))
+//    {
+//        std::cout << item.second.data() << std::endl;
 //    }
     return songList;
 }
