@@ -28,13 +28,17 @@
 #ifdef HAVE_CURL_CURL_H
 
 #include <string>
+#include <bitset>
 #include "curl/curl.h"
 
 namespace Curl
 {
-CURLcode perform(std::string &data, const std::string &URL, const std::string &referer = "", unsigned timeout = 10, const std::string &postData = "");
-	
+    CURLcode perform(std::string &data, const std::string &URL, const std::string &referer = "", unsigned timeout = 10, const std::string &postData = "", std::bitset<16> options = 0);
 	std::string escape(const std::string &s);
+
+    const int POST = (1 << 0);
+    const int FOLLOW_LOCATION = (1 << 1);
+    const int INCLUDE_HEADER = (1 << 2);
 }
 
 #endif // HAVE_CURL_CURL_H

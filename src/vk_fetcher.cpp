@@ -1,6 +1,10 @@
+#include <boost/property_tree/json_parser.hpp>
+#include <sstream>
+
 #include "vk_fetcher.h"
 #include "curl_handle.h"
 #include "conv.h"
+
 
 const char *VKFetcher::authURL = "https://oauth.vk.com/authorize?client_id=3803853&scope=audio&redirect_uri=https://oauth.vk.com/blank.html&display=mobile&v=5&response_type=token";
 const char  *VKFetcher::searchBaseUrl = "https://api.vk.com/method/audio.search?";
@@ -49,6 +53,15 @@ MPD::SongList *VKFetcher::GetList()
         return songList;
     }
 
+    std::stringstream ss;
+    ss << data;
+
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+//    for (auto song : pt.get_child(""))
+//    {
+
+//    }
     return songList;
 }
 
@@ -58,7 +71,8 @@ std::string VKFetcher::getAccessToken()
     std::string url = authURL;
     std::string data;
 
-    CURLcode code = Curl::perform(data, url);
+    int curlOptions = Curl::FOLLOW_LOCATION | Curl::INCLUDE_HEADER;
+    CURLcode code = Curl::perform(data, url, "", 10, "", curlOptions);
     if (code != CURLE_OK)
     {
         return "";
@@ -104,7 +118,7 @@ std::string VKFetcher::getAccessToken()
             return "";
         }
 
-        code = Curl::perform(data, url, "", 10, strPostParams);
+        code = Curl::perform(data, url, "", 10, strPostParams, curlOptions | Curl::POST);
         if (code != CURLE_OK)
         {
             return "";

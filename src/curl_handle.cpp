@@ -35,7 +35,7 @@ namespace
 	}
 }
 
-CURLcode Curl::perform(std::string &data, const std::string &URL, const std::string &referer, unsigned timeout, const std::string &postData)
+CURLcode Curl::perform(std::string &data, const std::string &URL, const std::string &referer, unsigned timeout, const std::string &postData, std::bitset<16> options)
 {
     //std::string headerData;
 	CURLcode result;
@@ -47,18 +47,26 @@ CURLcode Curl::perform(std::string &data, const std::string &URL, const std::str
 	curl_easy_setopt(c, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt(c, CURLOPT_USERAGENT, "ncmpcpp " VERSION);
 
-    //В отдельный метод
-    curl_easy_setopt(c, CURLOPT_FOLLOWLOCATION, 1);
-
-    curl_easy_setopt(c, CURLOPT_HEADER, 1);
-
 	if (!referer.empty())
     {
 		curl_easy_setopt(c, CURLOPT_REFERER, referer.c_str());
     }
-    if (postData.size() != 0)
+
+    if (options[0] == 1)
     {
         curl_easy_setopt(c, CURLOPT_POST, 1);
+    }
+    if (options[1] == 1)
+    {
+        curl_easy_setopt(c, CURLOPT_FOLLOWLOCATION, 1);
+    }
+    if (options[2] == 1)
+    {
+        curl_easy_setopt(c, CURLOPT_HEADER, 1);
+    }
+
+    if (postData.size() != 0)
+    {
         curl_easy_setopt(c, CURLOPT_POSTFIELDS, postData.c_str());
     }
     // TODO: Сделать что-нибудь с записью куков даже когда они не нужны.
