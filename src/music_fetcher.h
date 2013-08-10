@@ -13,7 +13,7 @@ class MusicFetcher
 public:
     MusicFetcher();
 
-    virtual MPD::SongList& GetList() = 0;
+    virtual MPD::SongList *GetList() = 0;
 
     virtual std::string GetArtist();
     virtual std::string GetTitle();

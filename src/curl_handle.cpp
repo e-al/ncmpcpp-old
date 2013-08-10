@@ -35,8 +35,9 @@ namespace
 	}
 }
 
-CURLcode Curl::perform(std::string &data, const std::string &URL, const std::string &referer, unsigned timeout)
+CURLcode Curl::perform(std::string &data, const std::string &URL, const std::string &referer, unsigned timeout, const std::string &postData)
 {
+    //std::string headerData;
 	CURLcode result;
 	CURL *c = curl_easy_init();
 	curl_easy_setopt(c, CURLOPT_URL, URL.c_str());
@@ -45,11 +46,28 @@ CURLcode Curl::perform(std::string &data, const std::string &URL, const std::str
 	curl_easy_setopt(c, CURLOPT_CONNECTTIMEOUT, timeout);
 	curl_easy_setopt(c, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt(c, CURLOPT_USERAGENT, "ncmpcpp " VERSION);
+
+    //В отдельный метод
+    curl_easy_setopt(c, CURLOPT_FOLLOWLOCATION, 1);
+
+    curl_easy_setopt(c, CURLOPT_HEADER, 1);
+
 	if (!referer.empty())
+    {
 		curl_easy_setopt(c, CURLOPT_REFERER, referer.c_str());
-	result = curl_easy_perform(c);
-	curl_easy_cleanup(c);
-	return result;
+    }
+    if (postData.size() != 0)
+    {
+        curl_easy_setopt(c, CURLOPT_POST, 1);
+        curl_easy_setopt(c, CURLOPT_POSTFIELDS, postData.c_str());
+    }
+    // TODO: Сделать что-нибудь с записью куков даже когда они не нужны.
+    curl_easy_setopt(c, CURLOPT_COOKIEFILE, "/tmp/ncmpcpp_vk_cookies");
+    result = curl_easy_perform(c);
+
+    curl_easy_setopt(c, CURLOPT_COOKIEJAR, "/tmp/ncmpcpp_vk_cookies");
+    curl_easy_cleanup(c);
+    return result;
 }
 
 std::string Curl::escape(const std::string &s)

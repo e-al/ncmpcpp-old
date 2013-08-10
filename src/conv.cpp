@@ -108,7 +108,7 @@ NCurses::Color IntoColor(const std::string &color)
 	else if (color == "green")
 		result = NCurses::clGreen;
 	else if (color == "yellow")
-		result = NCurses::clYellow;
+        result = NCurses::clYellow;
 	else if (color == "blue")
 		result = NCurses::clBlue;
 	else if (color == "magenta")

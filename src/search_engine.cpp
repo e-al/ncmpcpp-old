@@ -82,7 +82,8 @@ void SearchEngine::Init()
 	w->SetSelectSuffix(&Config.selected_item_suffix);
 	w->SetGetStringFunction(SearchEngineOptionToString);
     SearchMode = &SearchModes[Config.search_engine_default_search_mode];
-    SearchSource = &SearchSources[Config.search_engine_default_source];
+    //SearchSource = &SearchSources[Config.search_engine_default_source];
+    SearchSource = &SearchSources[2];
 	isInitialized = 1;
 }
 
@@ -447,13 +448,15 @@ void SearchEngine::Search()
 			break;
 		}
 	}
-	if (constraints_empty)
-		return;
+    //TODO: !!!!!!!!!!!!!1111
+    //if (constraints_empty)
+    //	return;
 	
     if (SearchSource == &SearchSources[2])
     {
         VKFetcher vkFetcher;
-        vkFetcher.getAccessToken();
+        vkFetcher.SetTitle("What is love");
+        vkFetcher.GetList();
     }
 
     if (SearchSource == &SearchSources[0] && (SearchMode == &SearchModes[0] || SearchMode == &SearchModes[2])) // use built-in mpd searching
