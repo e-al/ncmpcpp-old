@@ -4,6 +4,7 @@
 
 
 #include "music_fetcher.h"
+#include "streamsong.h"
 #include "mpdpp.h"
 
 
