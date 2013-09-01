@@ -61,7 +61,7 @@ namespace MPD
 			std::string GetTags(GetFunction) const;
 			
 			unsigned GetHash() const { return itsHash; }
-			unsigned GetTotalLength() const { return mpd_song_get_duration(itsSong); }
+            unsigned GetTotalLength() const { return itsSong ? mpd_song_get_duration(itsSong) : 0; }
 			unsigned GetPosition() const { return mpd_song_get_pos(itsSong); }
 			unsigned GetID() const { return mpd_song_get_id(itsSong); }
 			

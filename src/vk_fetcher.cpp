@@ -118,7 +118,7 @@ MPD::SongList *VKFetcher::GetList()
 	return songList;
 }
 
-void VKFetcher::SetCount(std::string &str)
+void VKFetcher::SetCount(const std::string &str)
 {
 	AddOption("count", str);
 }

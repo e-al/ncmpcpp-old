@@ -139,6 +139,10 @@ mpd_tag_type IntoTagItem(char c)
 			return MPD_TAG_COMPOSER;
 		case 'p':
 			return MPD_TAG_PERFORMER;
+        case 't':
+            return MPD_TAG_TITLE;
+        case 'C':
+            return MPD_TAG_COMMENT;
 		default:
 			return MPD_TAG_ARTIST;
 	}

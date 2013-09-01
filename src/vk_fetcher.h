@@ -18,7 +18,7 @@ public:
 
     virtual MPD::SongList *GetList() override;
 
-	void SetCount(std::string &);
+    void SetCount(const std::string &);
 	std::string GetCount();
 
 
