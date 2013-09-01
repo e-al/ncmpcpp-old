@@ -63,7 +63,7 @@ class SearchEngine : public Screen< Menu< std::pair<Buffer *, MPD::Song *> > >
 		virtual bool isLockable() { return true; }
 		
 	private:
-		void Prepare(std::vector<std::string> *newConstraints = nullptr);
+		void Prepare();
 		void Search();
 		void Reset();
 		
@@ -75,32 +75,39 @@ class SearchEngine : public Screen< Menu< std::pair<Buffer *, MPD::Song *> > >
 		static const char *SearchModes[];
         static const char *SearchSources[];
 		
-//		static const size_t ConstraintsNumber = 10;
 		std::vector<std::string> *ConstraintsNames;
 
 		static std::vector<std::string> ConstraintsRegularNames;
 		static std::vector<std::string> ConstraintsVkNames;
-//		static const char *ConstraintsNames[];
-//		static const size_t ConstraintsVkNumber = ;
-//		static const char *ConstraintsVkNames[];
-		//std::string itsConstraints[ConstraintsNumber];
-		
-		std::vector<std::string> itsConstraints;
-		static bool MatchToPattern;
 
 		struct Constraint
 		{
-			Constraint(std::string &newName) : name(newName) {}
+			Constraint(const std::string &newName, char newTag = 0) :
+				name(newName),
+				tag(newTag)
+				{}
 
 			void Set(const std::string &str) { value = str; }
 			std::string Get() const { return value; }
 			std::string GetName() const { return name; }
-			char getTag() const { return tag; }
+			char GetTag() const { return tag; }
 		private:
 			std::string name;
 			std::string value;
 			char tag;
 		};
+
+		typedef std::vector<Constraint *> ConstraintsVector;
+
+		static ConstraintsVector vkConstraints;
+		static ConstraintsVector regularConstraints;
+
+		std::map<std::string, ConstraintsVector *> constraintsMap;
+		
+//		std::vector<std::string> itsConstraints;
+		ConstraintsVector *itsConstraints;
+
+		static bool MatchToPattern;
 };
 
 extern SearchEngine *mySearcher;
