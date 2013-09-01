@@ -869,6 +869,10 @@ int MPD::Connection::AddSong(const std::string &path, int pos)
 
 int MPD::Connection::AddSong(const Song &s, int pos)
 {
+	if (s.isStream())
+	{
+		return AddSong(s.GetFile());
+	}
 	return !s.Empty() ? (AddSong((!s.isFromDB() ? "file://" : "") + (s.Localized() ? locale_to_utf_cpy(s.GetFile()) : s.GetFile()), pos)) : -1;
 }
 

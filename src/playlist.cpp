@@ -428,7 +428,7 @@ std::string Playlist::SongInColumnsToString(const MPD::Song &s, void *)
 	return s.toString(Config.song_in_columns_to_string_format);
 }
 
-bool Playlist::Add(const MPD::Song &s, bool in_playlist, bool play, int position)
+int Playlist::Add(const MPD::Song &s, bool in_playlist, bool play, int position)
 {
 	Global::BlockItemListUpdate = 1;
 	if (Config.ncmpc_like_songs_adding && in_playlist)
@@ -472,10 +472,13 @@ bool Playlist::Add(const MPD::Song &s, bool in_playlist, bool play, int position
 			ShowMessage("Added to playlist: %s", s.toString(Config.song_status_format_no_colors).c_str());
 			if (play)
 				Mpd.PlayID(id);
-			return true;
+//			return true;
 		}
 		else
-			return false;
+		{
+//			return false;
+			return id;
+		}
 	}
 }
 

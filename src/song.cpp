@@ -80,7 +80,11 @@ std::string MPD::Song::GetLength(unsigned pos) const
 {
 	if (pos > 0)
 		return "";
-	unsigned len = mpd_song_get_duration(itsSong);
+	unsigned len = 0;
+	if (itsSong)
+	{
+		len = mpd_song_get_duration(itsSong);
+	}
 	return !len ? "-:--" : ShowTime(len);
 }
 
@@ -88,6 +92,8 @@ void MPD::Song::Localize()
 {
 #	ifdef HAVE_ICONV_H
 	if (isLocalised)
+		return;
+	if (!itsSong)	 // TODO::grandma
 		return;
 	const char *tag, *conv_tag;
 	conv_tag = tag = mpd_song_get_uri(itsSong);
@@ -351,6 +357,11 @@ void MPD::Song::SetTags(SetFunction f, const std::string &value)
 	(this->*f)("", pos);
 }
 
+void MPD::Song::SetFilename(const std::string &name)
+{
+	itsFile = strdup(name.c_str());
+}
+
 std::string MPD::Song::ParseFormat(std::string::const_iterator &it, const char *escape_chars) const
 {
 	std::string result;
@@ -551,9 +562,14 @@ std::string MPD::Song::GetTag(mpd_tag_type type, unsigned pos) const
 	if (itsTags)
 	{
 		TagMap::const_iterator it = itsTags->find(std::make_pair(type, pos));
-		if (it != itsTags->end())
+		if (it!= itsTags->end())
 			return it->second;
 	}
+	if (!itsSong)
+	{
+		return "";
+	}
+
 	const char *tag = mpd_song_get_tag(itsSong, type, pos);
 	return tag ? tag : "";
 }

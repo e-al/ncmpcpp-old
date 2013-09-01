@@ -36,7 +36,12 @@ std::string MusicFetcher::GetGenre()
 
 std::string MusicFetcher::GetYear()
 {
-    return searchMap["year"];
+	return searchMap["year"];
+}
+
+std::string MusicFetcher::GetAny()
+{
+	return searchMap["any"];
 }
 
 
@@ -72,7 +77,22 @@ void MusicFetcher::SetGenre(const std::string &str)
 
 void MusicFetcher::SetYear(const std::string &str)
 {
-    searchMap["year"] = str;
+	searchMap["year"] = str;
+}
+
+void MusicFetcher::SetAny(const std::string &str)
+{
+	searchMap["any"] = str;
+}
+
+void MusicFetcher::AddOption(const std::string &name, const std::string &value)
+{
+	searchMap[name] = value;
+}
+
+std::string MusicFetcher::GetOption(const std::string &name)
+{
+	return searchMap[name];
 }
 
 

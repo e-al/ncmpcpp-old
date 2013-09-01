@@ -1,5 +1,6 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <sstream>
 #include <iostream>
 
@@ -46,15 +47,31 @@ MPD::SongList *VKFetcher::GetList()
 
     std::string searchUrl = searchBaseUrl;
     searchUrl += "q=";
+	searchUrl += Curl::escape(GetAny());
+	searchUrl += "%20";
     searchUrl += Curl::escape(GetArtist());
     searchUrl += "%20";
     searchUrl += Curl::escape(GetTitle());
+
+	std::string count = Curl::escape(GetCount());
+	try
+	{
+		boost::lexical_cast<int>(count);
+	}
+	catch (boost::bad_lexical_cast &)
+	{
+		count = "50";
+	}
+
+	searchUrl += "&count=";
+	searchUrl += count;
+
     searchUrl += "&auto_complete=0&lyrics=0&";
-    if (GetTitle() == "" && GetArtist() != "")
+	if (GetTitle() == "" && GetAny() == "" && GetArtist() != "")
     {
         searchUrl += "performer_only=1&";
     }
-    searchUrl += "sort=2&count=5&access_token=";
+	searchUrl += "sort=2&access_token=";
     searchUrl += accessToken;
 
     std::string data;
@@ -67,16 +84,25 @@ MPD::SongList *VKFetcher::GetList()
     std::stringstream ss;
     ss << data;
 
+	boost::property_tree::ptree pt;
+	boost::property_tree::read_json(ss, pt);
+	auto response = pt.get_child("response");
+	response.pop_front();
 
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_json(ss, pt);
-
-    //print(pt);
+	MPD::Song *newSong = nullptr;
     try
     {
-        for (auto song: pt.get_child("response"))
+		for (auto song: response)
         {
-            std::cout << song.second.get<std::string>("title") << std::endl;
+			newSong = new MPD::Song();
+			if (newSong)
+			{
+				newSong->SetFilename(song.second.get<std::string>("url"));
+				newSong->SetArtist(song.second.get<std::string>("artist"));
+				newSong->SetTitle(song.second.get<std::string>("title"));
+//				std::cout << song.second.get<std::string>("title") << std::endl;
+				songList->push_back(newSong);
+			}
         }
     }
     catch(boost::exception& e)
@@ -88,7 +114,18 @@ MPD::SongList *VKFetcher::GetList()
 //    {
 //        std::cout << item.second.data() << std::endl;
 //    }
-    return songList;
+	int i = 0;
+	return songList;
+}
+
+void VKFetcher::SetCount(std::string &str)
+{
+	AddOption("count", str);
+}
+
+std::string VKFetcher::GetCount()
+{
+	return GetOption("count");
 }
 
 std::string VKFetcher::getAccessToken()

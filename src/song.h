@@ -83,7 +83,9 @@ namespace MPD
 			void SetPosition(unsigned);
 			
 			void SetTags(SetFunction, const std::string &);
-			
+
+
+			void SetFilename(const std::string &name);
 			void SetNewName(const std::string &name) { itsNewName = name == GetName() ? "" : name; }
 			std::string GetNewName() const { return itsNewName; }
 			

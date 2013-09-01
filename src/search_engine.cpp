@@ -34,7 +34,7 @@ using Global::MainStartY;
 
 SearchEngine *mySearcher = new SearchEngine;
 
-const char *SearchEngine::ConstraintsNames[] =
+std::vector<std::string> SearchEngine::ConstraintsRegularNames =
 {
 	"Any:",
 	"Artist:",
@@ -47,6 +47,19 @@ const char *SearchEngine::ConstraintsNames[] =
 	"Year:",
 	"Comment:"
 };
+
+std::vector<std::string> SearchEngine::ConstraintsVkNames =
+{
+	"Any:",
+	"Artist:",
+	"Title:",
+	"Count:",
+	"Genre:",
+	"Vk Group:",
+	"Vk User:"
+};
+
+
 
 const char *SearchEngine::SearchModes[] =
 {
@@ -71,7 +84,7 @@ size_t SearchEngine::SearchButton = 14;
 void SearchEngine::Init()
 {
 	static Display::ScreenFormat sf = { this, &Config.song_list_format };
-	
+
 	w = new Menu< std::pair<Buffer *, MPD::Song *> >(0, MainStartY, COLS, MainHeight, "", Config.main_color, brNone);
 	w->HighlightColor(Config.main_highlight_color);
 	w->CyclicScrolling(Config.use_cyclic_scrolling);
@@ -82,8 +95,10 @@ void SearchEngine::Init()
 	w->SetSelectSuffix(&Config.selected_item_suffix);
 	w->SetGetStringFunction(SearchEngineOptionToString);
     SearchMode = &SearchModes[Config.search_engine_default_search_mode];
-    //SearchSource = &SearchSources[Config.search_engine_default_source];
-    SearchSource = &SearchSources[2];
+	//SearchSource = &SearchSources[Config.search_engine_default_source];
+	SearchSource = &SearchSources[2]; // TODO: grandma
+	ConstraintsNames = &ConstraintsVkNames;
+	itsConstraints.resize(ConstraintsNames->size());
 	isInitialized = 1;
 }
 
@@ -140,28 +155,45 @@ std::basic_string<my_char_t> SearchEngine::Title()
 void SearchEngine::EnterPressed()
 {
 	size_t option = w->Choice();
-	if (option > ConstraintsNumber && option < SearchButton)
+	if (option > ConstraintsNames->size() && option < SearchButton)
 		w->Current().first->Clear();
 	if (option < SearchButton)
 		LockStatusbar();
 	
-	if (option < ConstraintsNumber)
+	if (option < ConstraintsNames->size())
 	{
-		Statusbar() << fmtBold << ConstraintsNames[option] << fmtBoldEnd << ' ';
+		Statusbar() << fmtBold << (*ConstraintsNames)[option] << fmtBoldEnd << ' ';
 		itsConstraints[option] = Global::wFooter->GetString(itsConstraints[option]);
 		w->Current().first->Clear();
-		*w->Current().first << fmtBold << std::setw(10) << std::left << ConstraintsNames[option] << fmtBoldEnd << ' ';
+		*w->Current().first << fmtBold << std::setw(10) << std::left << (*ConstraintsNames)[option] << fmtBoldEnd << ' ';
 		ShowTag(*w->Current().first, itsConstraints[option]);
 	}
-	else if (option == ConstraintsNumber+1)
+	else if (option == ConstraintsNames->size()+1)
 	{
         if (!*++SearchSource)
         {
-            SearchSource = &SearchSources[0];
+			SearchSource = &SearchSources[0];
         }
-        *w->Current().first << fmtBold << "Search in:" << fmtBoldEnd << ' ' << *SearchSource;
+		bool constraintsChanged = false;
+
+		if (!strcmp(*SearchSource, SearchSources[2]))
+		{
+			Prepare(&ConstraintsVkNames);
+			w->Goto(ConstraintsNames->size() + 1);
+			constraintsChanged = true;
+		}
+		else if(ConstraintsNames != &ConstraintsRegularNames)
+		{
+			Prepare(&ConstraintsRegularNames);
+			w->Goto(ConstraintsNames->size() + 1);
+			constraintsChanged = true;
+		}
+		if (!constraintsChanged)
+		{
+			*w->at(ConstraintsNames->size() + 1).first << fmtBold << "Search in:" << fmtBoldEnd << ' ' << *SearchSource;
+		}
 	}
-	else if (option == ConstraintsNumber+2)
+	else if (option == ConstraintsNames->size() + 2)
 	{
 		if (!*++SearchMode)
 			SearchMode = &SearchModes[0];
@@ -217,8 +249,12 @@ void SearchEngine::SpacePressed()
 		w->Scroll(wDown);
 		return;
 	}
-	
-	w->Bold(w->Choice(), myPlaylist->Add(*w->Current().second, w->isBold(), 0));
+
+	int newId = myPlaylist->Add(*w->Current().second, w->isBold(), 0);
+	if (newId)
+	{
+		w->Bold(w->Choice(), true);
+	}
 	w->Scroll(wDown);
 }
 
@@ -231,7 +267,7 @@ void SearchEngine::MouseButtonPressed(MEVENT me)
 		if (!w->Goto(me.y))
 			return;
 		w->Refresh();
-		if ((me.bstate & BUTTON3_PRESSED || w->Choice() > ConstraintsNumber) && w->Choice() < StaticOptions)
+		if ((me.bstate & BUTTON3_PRESSED || w->Choice() > ConstraintsNames->size()) && w->Choice() < StaticOptions)
 			EnterPressed();
 		else if (w->Choice() >= StaticOptions)
 		{
@@ -391,38 +427,49 @@ void SearchEngine::SelectAlbum()
 	}
 }
 
-void SearchEngine::Prepare()
+void SearchEngine::Prepare(std::vector<std::string> *newConstraints)
 {
+
 	for (size_t i = 0; i < w->Size(); ++i)
 	{
-		if (i == ConstraintsNumber || i == SearchButton-1 || i == ResetButton+1 || i == ResetButton+3) // separators
+		if (i == ConstraintsNames->size() || i == SearchButton-1 || i == ResetButton+1 || i == ResetButton+3) // separators
 			continue;
 		delete (*w)[i].first;
 		delete (*w)[i].second;
 	}
-	
+	if (newConstraints)
+//	if (newConstraints != ConstraintsNames)
+	{
+		ConstraintsNames = newConstraints;
+		itsConstraints.resize(ConstraintsNames->size());
+	}
+
+	StaticOptions = ConstraintsNames->size() + 9;
+	ResetButton = ConstraintsNames->size() + 5;
+	SearchButton = ConstraintsNames->size() + 4;
+
 	w->SetTitle("");
 	w->Clear();
 	w->ResizeList(StaticOptions-3);
 	
-	w->IntoSeparator(ConstraintsNumber);
+	w->IntoSeparator(ConstraintsNames->size());
 	w->IntoSeparator(SearchButton-1);
 	
 	for (size_t i = 0; i < StaticOptions-3; ++i)
 	{
-		if (i == ConstraintsNumber || i == SearchButton-1) // separators
+		if (i == ConstraintsNames->size() || i == SearchButton-1) // separators
 			continue;
 		(*w)[i].first = new Buffer();
 	}
 	
-	for (size_t i = 0; i < ConstraintsNumber; ++i)
+	for (size_t i = 0; i < ConstraintsNames->size(); ++i)
 	{
-		*(*w)[i].first << fmtBold << std::setw(10) << std::left << ConstraintsNames[i] << fmtBoldEnd << ' ';
+		*(*w)[i].first << fmtBold << std::setw(10) << std::left << (*ConstraintsNames)[i] << fmtBoldEnd << ' ';
 		ShowTag(*(*w)[i].first, itsConstraints[i]);
 	}
 	
-    *w->at(ConstraintsNumber+1).first << fmtBold << "Search in:" << fmtBoldEnd << ' ' << *SearchSource;
-	*w->at(ConstraintsNumber+2).first << fmtBold << "Search mode:" << fmtBoldEnd << ' ' << *SearchMode;
+	*w->at(ConstraintsNames->size()+1).first << fmtBold << "Search in:" << fmtBoldEnd << ' ' << *SearchSource;
+	*w->at(ConstraintsNames->size()+2).first << fmtBold << "Search mode:" << fmtBoldEnd << ' ' << *SearchMode;
 	
 	*w->at(SearchButton).first << "Search";
 	*w->at(ResetButton).first << "Reset";
@@ -430,7 +477,7 @@ void SearchEngine::Prepare()
 
 void SearchEngine::Reset()
 {
-	for (size_t i = 0; i < ConstraintsNumber; ++i)
+	for (size_t i = 0; i < ConstraintsNames->size(); ++i)
 		itsConstraints[i].clear();
 	w->Reset();
 	Prepare();
@@ -440,7 +487,7 @@ void SearchEngine::Reset()
 void SearchEngine::Search()
 {
 	bool constraints_empty = 1;
-	for (size_t i = 0; i < ConstraintsNumber; ++i)
+	for (size_t i = 0; i < ConstraintsNames->size(); ++i)
 	{
 		if (!itsConstraints[i].empty())
 		{
@@ -448,18 +495,51 @@ void SearchEngine::Search()
 			break;
 		}
 	}
-    //TODO: !!!!!!!!!!!!!1111
+	//TODO::grandma
     //if (constraints_empty)
     //	return;
 	
-    if (SearchSource == &SearchSources[2])
-    {
-        VKFetcher vkFetcher;
-        vkFetcher.SetTitle("What is love");
-        vkFetcher.GetList();
-    }
+	if (SearchSource == &SearchSources[2])
+	{
+		VKFetcher vkFetcher;
+		if (!itsConstraints[0].empty())
+			vkFetcher.SetAny(itsConstraints[0]);
+		if (!itsConstraints[1].empty())
+			vkFetcher.SetArtist(itsConstraints[1]);
+		if (!itsConstraints[2].empty())
+			vkFetcher.SetTitle(itsConstraints[2]);
+		if (!itsConstraints[3].empty())
+			vkFetcher.SetCount(itsConstraints[3]);
+//		if (!itsConstraints[4].empty())
+//			Mpd.AddSearchURI(itsConstraints[4]);
+//		if (!itsConstraints[5].empty())
+//			Mpd.AddSearch(MPD_TAG_COMPOSER, itsConstraints[5]);
+//		if (!itsConstraints[6].empty())
+//			Mpd.AddSearch(MPD_TAG_PERFORMER, itsConstraints[6]);
+//		if (!itsConstraints[7].empty())
+//			Mpd.AddSearch(MPD_TAG_GENRE, itsConstraints[7]);
+//		if (!itsConstraints[8].empty())
+//			Mpd.AddSearch(MPD_TAG_DATE, itsConstraints[8]);
+//		if (!itsConstraints[9].empty())
+//			Mpd.AddSearch(MPD_TAG_COMMENT, itsConstraints[9]);
 
-    if (SearchSource == &SearchSources[0] && (SearchMode == &SearchModes[0] || SearchMode == &SearchModes[2])) // use built-in mpd searching
+		MPD::SongList *list = vkFetcher.GetList();
+
+		if (!list)
+		{
+			return;
+		}
+
+		for (auto song: *list)
+		{
+			w->AddOption(std::make_pair(static_cast<Buffer *>(0), song));
+
+		}
+		list->clear();
+		return;
+	}
+
+	if (SearchSource == &SearchSources[0] && (SearchMode == &SearchModes[0] || SearchMode == &SearchModes[2])) // use built-in mpd searching
 	{
 		Mpd.StartSearch(SearchMode == &SearchModes[2]);
 		if (!itsConstraints[0].empty())
@@ -488,17 +568,17 @@ void SearchEngine::Search()
 			w->AddOption(std::make_pair(static_cast<Buffer *>(0), *it));
 		return;
 	}
-	
+
 	MPD::SongList list;
-    if (SearchSource == &SearchSources[0])
+	if (SearchSource == &SearchSources[0])
 		Mpd.GetDirectoryRecursive("/", list);
-    else // if(SearchSource == &SearchSources[1])
+	else // if(SearchSource == &SearchSources[1])  // TODO: grandma вернуть условие
 	{
 		list.reserve(myPlaylist->Items->Size());
 		for (size_t i = 0; i < myPlaylist->Items->Size(); ++i)
 			list.push_back(&(*myPlaylist->Items)[i]);
 	}
-	
+
 	bool any_found = 1;
 	bool found = 1;
 	
@@ -543,6 +623,25 @@ void SearchEngine::Search()
 					found = !regexec(&rx, (*it)->GetAlbum().c_str(), 0, 0, 0);
 				regfree(&rx);
 			}
+			///////////// TODO::grandma delete
+//			MPD::Song::GetFunction get;
+//			for (auto consraint : consraints)
+//			{
+//				if (found && !consraint.Get().empty())
+//				{
+//					get = toGetFunction(constraint.tag);
+//					if (!regcomp(&rx, constraint.Get().c_str(), REG_ICASE | Config.regex_type))
+//						found = !regexec(&rx, (*it)->GetTags(get).c_str(), 0, 0, 0);
+//					regfree(&rx);
+//				}
+//			}
+//			if (found && !CurrentConstraints[3].empty())
+//			{
+//				if (!regcomp(&rx, itsConstraints[3].c_str(), REG_ICASE | Config.regex_type))
+//					found = !regexec(&rx, (*it)->GetAlbum().c_str(), 0, 0, 0);
+//				regfree(&rx);
+//			}
+			/////////////
 			if (found && !itsConstraints[4].empty())
 			{
 				if (!regcomp(&rx, itsConstraints[4].c_str(), REG_ICASE | Config.regex_type))

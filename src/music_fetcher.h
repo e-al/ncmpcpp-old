@@ -22,6 +22,7 @@ public:
     virtual std::string GetPerformer();
     virtual std::string GetGenre();
     virtual std::string GetYear();
+	virtual std::string GetAny();
 
     virtual void SetArtist(const std::string &);
     virtual void SetTitle(const std::string &);
@@ -30,7 +31,11 @@ public:
     virtual void SetPerformer(const std::string &);
     virtual void SetGenre(const std::string &);
     virtual void SetYear(const std::string &);
+	virtual void SetAny(const std::string &);
 
+protected:
+	void AddOption(const std::string &name, const std::string &value);
+	std::string GetOption(const std::string &name);
 private:
     SearchMap searchMap;
 };
