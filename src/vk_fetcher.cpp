@@ -162,7 +162,7 @@ std::string VKFetcher::getAccessToken()
         }
 
         postParams["email"] = Curl::escape("+79889431831");
-        postParams["pass"] = Curl::escape("afrqj'cc");
+        postParams["pass"] = Curl::escape("insert_the_pass_here");
 
         std::string strPostParams;
 
